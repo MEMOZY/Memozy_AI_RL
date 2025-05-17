@@ -47,6 +47,7 @@ image_files = sorted([f for f in os.listdir(image_folder) if f.lower().endswith(
 
 # 출력 파일 경로
 output_path = "./data/RM_data/caption/gpt_output.jsonl"
+
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
 # JSONL 파일로 저장
