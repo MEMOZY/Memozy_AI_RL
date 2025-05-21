@@ -1,3 +1,4 @@
+# regression
 import torch
 import torch.nn as nn
 from transformers import BertTokenizer, BertModel
@@ -5,11 +6,25 @@ from torch.utils.data import Dataset, DataLoader
 import json
 import os
 import matplotlib.pyplot as plt
+import numpy as np
+from collections import defaultdict
+import random
 
-# 1. Dataset 정의
+# 시드 고정
+seed=42
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
+# 수정된 CaptionRewardDataset 클래스
 class CaptionRewardDataset(Dataset):
-    def __init__(self, jsonl_path):
+    def __init__(self, jsonl_path, oversample=True):
         self.samples = []
+        rate_buckets = defaultdict(list)
+
         with open(jsonl_path, 'r', encoding='utf-8') as f:
             for line in f:
                 data = json.loads(line)
@@ -20,6 +35,24 @@ class CaptionRewardDataset(Dataset):
                 except:
                     rate = 0.0
                 self.samples.append((caption, rate))
+                if oversample:
+                    rate_buckets[rate].append((caption, rate))
+
+        # --- Oversampling ---
+        if oversample:
+            max_count = max(len(samples) for samples in rate_buckets.values())
+            balanced_samples = []
+
+            for rate, samples in rate_buckets.items():
+                if len(samples) < max_count:
+                    # 부족한 샘플을 복제해서 채움
+                    oversampled = random.choices(samples, k=max_count - len(samples))
+                    balanced_samples.extend(samples + oversampled)
+                else:
+                    balanced_samples.extend(samples)
+
+            self.samples = balanced_samples
+            random.shuffle(self.samples)
 
     def __len__(self):
         return len(self.samples)
@@ -27,6 +60,7 @@ class CaptionRewardDataset(Dataset):
     def __getitem__(self, idx):
         caption, rate = self.samples[idx]
         return caption, rate
+
 
 # 2. Reward Model 정의 (BERT Freeze + MLP)
 class RewardModel(nn.Module):
@@ -55,7 +89,7 @@ class RewardModel(nn.Module):
 
 # 3. 학습 및 평가 함수
 def train_and_evaluate(train_path, test_path, save_path="./reward_model.pt",
-                       epochs=30, batch_size=8, lr=1e-3,
+                       epochs=100, batch_size=8, lr=1e-3,
                        device="cuda" if torch.cuda.is_available() else "cpu"):
 
     # 데이터 로딩
@@ -67,11 +101,12 @@ def train_and_evaluate(train_path, test_path, save_path="./reward_model.pt",
     # 모델, 옵티마이저, 손실함수
     model = RewardModel().to(device)
     optimizer = torch.optim.Adam(model.mlp.parameters(), lr=lr)
-    criterion = nn.SmoothL1Loss()# criterion = nn.MSELoss()
+    criterion = nn.SmoothL1Loss()
 
     # 결과 저장
     train_losses = []
     test_losses = []
+    best_test_loss = float('inf')  # 가장 낮은 테스트 손실 초기화
 
     model.train()
     for epoch in range(epochs):
@@ -105,22 +140,30 @@ def train_and_evaluate(train_path, test_path, save_path="./reward_model.pt",
 
         print(f"Epoch {epoch+1}/{epochs} - Train Loss: {avg_train_loss:.4f} - Test Loss: {avg_test_loss:.4f}")
 
-    # --- 모델 저장 ---
-    torch.save(model.state_dict(), save_path)
-    print(f"모델 저장 완료: {save_path}")
+        # --- 가장 좋은 모델 저장 ---
+        if avg_test_loss < best_test_loss:
+            best_test_loss = avg_test_loss
+            torch.save(model.state_dict(), save_path)
+            print(f"✅ 모델 저장됨 (Epoch {epoch+1}, Test Loss: {avg_test_loss:.4f})")
+
+    print(f"\n🎯 최종 최소 Test Loss: {best_test_loss:.4f}")
+    print(f"모델 저장 경로: {save_path}")
 
     # --- 시각화 ---
     plt.figure(figsize=(8, 5))
     plt.plot(range(1, epochs + 1), train_losses, label='Train Loss')
     plt.plot(range(1, epochs + 1), test_losses, label='Test Loss')
     plt.xlabel("Epoch")
-    plt.ylabel("MSE Loss")
+    plt.ylabel("SmoothL1Loss Loss")
     plt.title("Reward Model Training & Test Loss")
     plt.legend()
     plt.grid()
+    plt.savefig("reward_model_loss_plot.png")
+    print("그래프 이미지 저장 완료: reward_model_loss_plot.png")
     plt.show()
 
     return model
+
 
 # 4. 실행 예시
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
