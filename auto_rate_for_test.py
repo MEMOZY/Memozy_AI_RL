@@ -9,8 +9,8 @@ with open(input_path, 'r', encoding='utf-8') as infile, open(output_path, 'w', e
         data = json.loads(line)
         # rate가 없거나 빈 경우 랜덤으로 부여
         if not data.get("rate") or str(data["rate"]).strip() == "":
-            random_rate = round(random.uniform(-1.0, 1.0), 1)
-            data["rate"] = random_rate
+            # random_rate = round(random.uniform(-1.0, 1.0), 1)
+            data["rate"] = 0
         outfile.write(json.dumps(data, ensure_ascii=False) + "\n")
 
-print(f"랜덤 rate 부여 완료 → {output_path}")
+print(f"rate 부여 완료 → {output_path}")

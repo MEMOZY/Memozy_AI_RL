@@ -1,9 +1,9 @@
 import json
 import random
 
-input_path = "./data/RM_data/caption/gpt_output_with_auto_rate.jsonl"
-train_output_path = "./data/RM_data/caption/train/gpt_output_with_auto_rate_train.jsonl"
-test_output_path = "./data/RM_data/caption/test/gpt_output_with_auto_rate_test.jsonl"
+input_path = "./data/RM_data/caption/human_rated_gpt_output.jsonl"
+train_output_path = "./data/RM_data/caption/train/gpt_output_with_human_rate_train.jsonl"
+test_output_path = "./data/RM_data/caption/test/gpt_output_with_human_rate_test.jsonl"
 
 # 데이터 불러오기
 with open(input_path, 'r', encoding='utf-8') as infile:

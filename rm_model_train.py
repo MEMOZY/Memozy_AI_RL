@@ -67,7 +67,7 @@ def train_and_evaluate(train_path, test_path, save_path="./reward_model.pt",
     # 모델, 옵티마이저, 손실함수
     model = RewardModel().to(device)
     optimizer = torch.optim.Adam(model.mlp.parameters(), lr=lr)
-    criterion = nn.MSELoss()
+    criterion = nn.SmoothL1Loss()# criterion = nn.MSELoss()
 
     # 결과 저장
     train_losses = []
@@ -125,6 +125,6 @@ def train_and_evaluate(train_path, test_path, save_path="./reward_model.pt",
 # 4. 실행 예시
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
-train_file = "./data/RM_data/caption/train/gpt_output_with_auto_rate_train.jsonl"
-test_file = "./data/RM_data/caption/test/gpt_output_with_auto_rate_test.jsonl"
+train_file = "./gpt_output_with_human_rate_train.jsonl"
+test_file = "./gpt_output_with_human_rate_test.jsonl"
 trained_model = train_and_evaluate(train_file, test_file)
