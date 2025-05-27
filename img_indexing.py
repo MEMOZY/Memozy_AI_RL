@@ -9,9 +9,9 @@ EXIF 정보를 확인하여 회전 정보에 따라 이미지를 변환한 후
 """
 
 # 원본 이미지 폴더 경로
-image_folder = "./data/raw_RM_img_data"
+image_folder = "./data/raw_MAB_img_data"
 # 저장할 폴더 (없으면 생성)
-output_folder = "./data/RM_data/img"
+output_folder = "./data/MAB_data/img"
 os.makedirs(output_folder, exist_ok=True)
 
 # 폴더 내 모든 이미지 파일 가져오기

@@ -41,6 +41,6 @@ def plot_rate_distribution(jsonl_path):
     return distribution
 
 # 예시 사용
-jsonl_path = "data/RM_data/caption/train/gpt_output_with_human_rate_train.jsonl"
+jsonl_path = "./data/RM_data/caption/train/gpt_output_with_human_rate_train.jsonl"
 dist = plot_rate_distribution(jsonl_path)
 print(dist)
