@@ -37,15 +37,17 @@
     7. 최적의 프롬포트를 채택합니다.
     8. 1~7과정을 Thread를 이용하여 실시간으로 사용자에게 맞춤형 프롬포트를 제공합니다. 이때 rate는 자동화된 pipeline으로 구축합니다.
 - **문제 아키텍처 시각화:**
-    - (0번 이미지)
-    - (1번 이미지)
+ <img width="700" height="350" alt="image" src="https://github.com/user-attachments/assets/31ffccce-bef1-41b5-a434-2bfb1508d226" />
+<img width="700" height="350" alt="image 1" src="https://github.com/user-attachments/assets/bfc93a00-6409-4e3d-829e-c3cea04cf652" />
+
 
 ## 2-2. Data
 
 - **데이터 생성:**
     - 보상 모델을 학습시키기 위해 총 500개의 일기 내용을 GPT API로 생성합니다.
     - **생성 방법:** 100장의 이미지와 랜덤한 장소, 인물, 기분을 샘플링하여 조합한 문맥을 생성하여 GPT API의 입력 값으로 사용합니다.
-    - (2번 이미지)
+  <img width="300" height="100" alt="image 2" src="https://github.com/user-attachments/assets/554512cf-a8ba-4569-85a3-c9a900ef616b" />
+
 - **데이터 평가 (Human Feedback):**
     - 생성된 500개의 일기 데이터에 대해 사람이 직접 평가를 반영합니다.
     - **평가 기준:**
@@ -57,12 +59,14 @@
         -1 : 일기 형식에서 벗어나거나 수정할 부분이 많은 일기. 너무 짧은 일기.
         > 
     - 위 기준에 따라 500개 일기에 대한 평가를 진행합니다.
-    - (3번 이미지)
+    <img width="1040" height="136" alt="image 3" src="https://github.com/user-attachments/assets/55805540-14b8-435c-aaaf-606f96d46c4f" />
+
 - **데이터 분리:**
     - 500개의 (일기, 평가) 데이터를 랜덤하게 섞은 후, **Train data 450개**와 **Test data 50개**로 분리합니다.
 - **데이터 분석:**
     - Train data의 분포를 시각화합니다.
-    - (4번 이미지)
+    <img width="653" height="426" alt="image 4" src="https://github.com/user-attachments/assets/b0ac1ae3-1153-4f36-b741-344157ee7c17" />
+
     - **분석 결과:**
         - 사전에 최적이라고 판단된 프롬포트(A)를 사용하여 일기를 생성했기 때문에, 대부분의 데이터가 0점 이상을 받았습니다.
         - 간혹 발생하는 문법 오류나 확률적으로 생성된 엉뚱한 일기에 대해 -0.5, -1점이 부여되어 음수 평가(rate)의 비율이 매우 적습니다.
@@ -83,16 +87,18 @@
 ### 1. 머신러닝(ML)을 이용한 결과
 
 - 다양한 ML 모델을 비교한 결과, **RandomForestRegressor**가 가장 좋은 성능을 보였습니다.
-- (5번 이미지)
+<img width="700" height="300" alt="image 5" src="https://github.com/user-attachments/assets/8ab32387-c685-482a-8f78-35520ef813c7" />
+
 - **RandomForestRegressor**는 Valid dataset에 대해 **MSE=0.2288**, **MAE=0.4002**의 오차를 기록했습니다.
 - (구조: 일기 텍스트 → 임베딩 → Layer → RandomForestRegressor)
 - **Valid dataset 예측 시각화:**
-    - (6번 이미지)
+<img width="700" height="300" alt="image 6" src="https://github.com/user-attachments/assets/d5b86588-6ff7-45b4-aeda-cff698a4c7ee" />
+
 - **Test dataset 성능:**
     - Test dataset에 대해 **MSE=0.2711**, **MAE=0.4126**을 기록했습니다.
-    - **Test dataset 예측 시각화:**
-        - (7번 이미지)
-        - (8번 이미지)
+    - **Test dataset 예측 시각화:**</br>
+<img width="700" height="300" alt="image 7" src="https://github.com/user-attachments/assets/634a2d73-b71f-435e-88eb-b8689096f163" />
+
 - **ML 모델의 한계:**
     1. Test MSE 0.2711, MAE 0.4126은 -1~+1 사이의 점수를 예측하는 문제에서 **성능이 매우 저조함**을 의미합니다.
     2. 모델이 임베딩된 문장을 입력받았을 때, 실제 평가 기준(표현의 풍부함, 문맥 등)을 반영해 점수를 매기는지 **해석하거나 신뢰하기 어려웠습니다.**
@@ -107,10 +113,10 @@
     - **출력 설정:** 출력값은 `1, -0.5, 0, +0.5, +1`의 **이산 값(Discrete values)**으로 설정했습니다. (초기에 연속적인 실수 값을 출력하도록 시도했으나, 오히려 성능이 저하되어 이산 값 방식으로 회귀 문제를 설정했습니다.)
 - **성능:**
     - 이 방식으로 평가한 GPT API의 Test dataset에 대한 오차는 다음과 같습니다.
-    - (9번 이미지)
     - **MSE=0.2650**, **MAE=0.3500**을 기록했습니다.
     - **Test dataset 예측 시각화:**
-        - (10번 이미지)
+     <img width="700" height="300" alt="image 10" src="https://github.com/user-attachments/assets/9b3e91e9-3735-42e3-85c9-3e5465c89511" />
+
 - **결론:**
     - ML 모델(RandomForest)보다 MSE가 소폭 감소했지만, **여전히 성능이 충분히 확보되지는 않았습니다.** (이 부분은 "한계 분석" 섹션에서 자세히 다룹니다.)
     - 우선, 최종적으로 **일기를 평가하는 GPT API를 보상 모델로 채택**하였습니다.
@@ -125,9 +131,11 @@
     - 탐색(Exploration)과 활용(Exploitation)의 균형을 맞추기 위해 **UCB(Upper Confidence Bound)** 알고리즘을 적용했습니다.
 - **실행 및 결과:**
     - `Iteration = 200`으로 설정 후 MAB를 수행한 최종 결과는 아래와 같습니다.
-    - (11번 이미지)
+    <img width="400" height="140" alt="image 11" src="https://github.com/user-attachments/assets/e00667b8-53f2-404c-a718-d1c019840dea" />
+
     - **각 프롬프트의 Reward 분포 시각화:**
-    - (12번 이미지)
+    <img width="700" height="360" alt="image 12" src="https://github.com/user-attachments/assets/d1be0e7f-5ace-4014-8142-4c8eb7e94e11" />
+
 
 # 3. Result & Limitation
 
